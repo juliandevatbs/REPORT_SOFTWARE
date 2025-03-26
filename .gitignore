@@ -1,0 +1,7 @@
+.venv
+venv
+.sql
+*.xlsm
+*.xlsx
+~$*.xlsl
+.env
