@@ -15,9 +15,9 @@ def connect_db():
          
         # Get the protected database variables
         db_server= os.getenv("DB_SERVER")
-        db_name= os.getenv("SRLSQL")
-        db_user= os.getenv("juliandevuser")
-        db_password= os.getenv("devUserdb@1")
+        db_name= os.getenv("DB_NAME")
+        db_user= os.getenv("DB_USER")
+        db_password= os.getenv("DB_PASSWORD")
         
         # Connection string to SQL SERVER
         connection_string=f"""
