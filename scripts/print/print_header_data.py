@@ -13,7 +13,6 @@ from excel.connect_excel import get_excel
 
 def print_header_data():
     
-    excel = None
     wb = None
     
     try:
@@ -21,11 +20,11 @@ def print_header_data():
         
         sheet_name= "Reporte"
         
-        route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12.xlsm"
-        # Get the excel connection
-        excel, wb, ws = get_excel(sheet_name, route)
+        route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (4).xlsx"
+
+        wb, ws = get_excel(sheet_name, route)
         
-        if not (excel and wb and ws):
+        if not (wb and ws):
             
             print("Excel cannot be opened")
             return False
@@ -48,29 +47,29 @@ def print_header_data():
                 
         # Write data cells
         print("Writing data")
-        ws.Range('K7').Value = client_str
-        ws.Range('K40').Value = client_str
-        ws.Range('K41').Value = client_str
-        ws.Range('K8').Value = client_str
-        ws.Range('K9').Value = address_str
-        ws.Range('K42').Value = address_str
-        ws.Range('K10').Value = city_str
-        ws.Range('K43').Value = city_str
-        ws.Range('AK9').Value = phone_str
-        ws.Range('AK42').Value = phone_str
-        ws.Range('M11').Value = zip_str
-        ws.Range('M44').Value = zip_str
-        ws.Range("I11").Value= state_str
-        ws.Range("I44").Value= state_str
+        ws['K7'].value = client_str
+        ws['K40'].value = client_str
+        ws['K41'].value = client_str
+        ws['K8'].value = client_str
+        ws['K9'].value = address_str
+        ws['K42'].value = address_str
+        ws['K10'].value = city_str
+        ws['K43'].value = city_str
+        ws['AK9'].value = phone_str
+        ws['AK42'].value = phone_str
+        ws['M11'].value = zip_str
+        ws['M44'].value = zip_str
+        ws["I11"].value= state_str
+        ws["I44"].value= state_str
         
         # Facility  Id and Client´s  Project Number are NA
-        ws.Range("AK7").Value= na_value
-        ws.Range("AK40").Value= na_value    
-        ws.Range("AK10").Value= na_value
-        ws.Range("AK43").Value= na_value
+        ws["AK7"].value= na_value
+        ws["AK40"].value= na_value
+        ws["AK10"].value= na_value
+        ws["AK43"].value= na_value
         
         # Save the file
-        wb.Save()
+        wb.save(route)
         
         # Wait a while for the saving process to complete
         time.sleep(1)
@@ -94,23 +93,11 @@ def print_header_data():
                 print("Closing the book")
                 
                 try:
-                    wb.Close(SaveChanges=True) 
+                    wb.close(SaveChanges=True)
                      
                 except:
                     pass
-                    
-            if excel is not None:
-                
-                print("Closing the excel")
-                
-                try:
-                    
-                    excel.Quit()
-                    
-                except:
-                    
-                    pass
-                
+
             time.sleep(2)
             kill_excel_processes()
                 

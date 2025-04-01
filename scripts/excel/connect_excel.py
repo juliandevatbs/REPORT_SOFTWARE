@@ -12,13 +12,13 @@ def get_excel(sheet_name: str, route: str):
         route (str): Path to the Excel workbook file
         
     Returns:
+
         tuple: A tuple containing (workbook_object, worksheet_object) if successful,
                or (None, None) if an error occurs.
-               
-    Note:
-        Unlike the win32com version, this doesn't return an Excel application object
-        since openpyxl doesn't work with the Excel application directly.
+
     """
+
+    #Initialize the variables
     wb = None
     ws = None
 

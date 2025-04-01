@@ -9,7 +9,7 @@ from scripts.get.get_analysis_requested import get_analysis_requested
 def get_lab_data():
     
     sheet_name = "Chain of Custody 1"
-    route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (3).xlsx"
+    route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (4).xlsx"
     all_data = []
     
     try:
