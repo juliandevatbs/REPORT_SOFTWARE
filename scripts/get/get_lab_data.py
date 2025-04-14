@@ -3,30 +3,17 @@ import sys
 from datetime import datetime
 from openpyxl import load_workbook
 
+from scripts.excel.connect_excel import get_excel
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from scripts.get.get_analysis_requested import get_analysis_requested
 
-def get_lab_data():
+def get_lab_data(wb, ws):
     
-    sheet_name = "Chain of Custody 1"
-    route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (4).xlsx"
+
     all_data = []
     
     try:
-        # Verify file exists
-        if not os.path.exists(route):
-            print("Error: File not found")
-            return None
-        
-        # Open workbook in read-only mode for better performance
-        wb = load_workbook(filename=route, read_only=False, data_only=True)
-        
-        # Verify sheet exists
-        if sheet_name not in wb.sheetnames:
-            print(f"Error: Worksheet '{sheet_name}' not found")
-            return None
-        
-        ws = wb[sheet_name]
         
         # Extraer prefijo de AA3
         prefijo = str(ws['AA3'].value).strip() if ws['AA3'].value else ''
@@ -71,7 +58,7 @@ def get_lab_data():
             
             all_data.append(row_data)
         
-        #print("All Data:", all_data)
+        print("All Data:", all_data)
         return all_data
     
     except Exception as e:
@@ -80,14 +67,5 @@ def get_lab_data():
         import traceback
         traceback.print_exc()
         return None
-    
-    finally:
-        # Clean up resources
-        if 'wb' in locals():
-            try:
-                wb.close()
-            except Exception as e:
-                print(f"Error closing workbook: {str(e)}")
 
-# Run the function
-get_lab_data()
+

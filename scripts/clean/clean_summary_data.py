@@ -1,141 +1,57 @@
-import os
-import subprocess
 import sys
-import time
+import os
 import traceback
 
-from openpyxl.reader.excel import load_workbook
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.utils.write_cell import write_cell
+from scripts.utils.safe_save import safe_save_workbook
 
 
-def safe_save_workbook(wb, route, max_attempts=3):
-    """Intenta guardar el workbook con reintentos y manejo de errores"""
-    for attempt in range(max_attempts):
-        try:
-            # Cerrar Excel antes de guardar
-            kill_excel_processes()
-            time.sleep(1)  # Esperar para asegurar cierre
-
-            # Guardar con backup
-            temp_route = route + ".temp"
-            wb.save(temp_route)
-
-            # Reemplazar archivo original
-            if os.path.exists(route):
-                os.remove(route)
-            os.rename(temp_route, route)
-
-            print(f"Workbook saved successfully on attempt {attempt + 1}")
-            return True
-        except Exception as e:
-            print(f"Intento {attempt + 1} de guardar falló: {str(e)}")
-            traceback.print_exc()  # Add this to see full error details
-            time.sleep(2)  # Wait before retrying
-    return False
-
-def kill_excel_processes():
-    """Cierra todos los procesos de Excel"""
+def clean_summary_data(wb, ws, row_data: list, n_records: int) -> bool:
     try:
-        subprocess.run(["taskkill", "/f", "/im", "excel.exe"],
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL)
-        time.sleep(1)
-    except:
-        pass
-
-
-def clear_summary_data():
-    """Limpia los datos analíticos en la hoja de reporte"""
-    try:
-        # Configuración
-        sheetname = "Reporte"
-        route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (3).xlsx"
-        start_row = 47
+        start_row = 140
         row_spacing = 5
-        num_blocks = 13  # Número máximo de bloques a limpiar (ajustar según necesidad)
+        empty_value = ''
 
-        # Verificar si el archivo existe
-        if not os.path.exists(route):
-            print(f"Error: Archivo no encontrado en {route}")
+        if n_records is None and row_data:
+            n_records = len(row_data)
+        if not n_records:
+            print("No hay datos para limpiar")
             return False
 
-        # Abrir el archivo Excel
-        print("Abriendo workbook...")
-        try:
-            wb = load_workbook(filename=route)
-            ws = wb[sheetname]
-        except Exception as e:
-            print(f"Error al abrir el archivo: {str(e)}")
-            return False
+        print(f"Limpiando {n_records} bloques de datos de resumen...")
+        success_count = 0
 
-        # Limpiar datos
-        print(f"Limpiando hasta {num_blocks} bloques de datos...")
-        for block_num in range(num_blocks):
+        for i in range(n_records):
+            current_row = start_row + (i * row_spacing)
+            second_line_row = current_row + 2
 
-            first_line_row = start_row + (block_num * row_spacing)
-            second_line_row = first_line_row + 2
+            write_cell(ws, f"B{current_row}", empty_value)
+            write_cell(ws, f"J{current_row}", empty_value)
+            write_cell(ws, f"R{current_row}", empty_value)
+            write_cell(ws, f"Z{current_row}", empty_value)
+            write_cell(ws, f"AJ{current_row}", empty_value)
 
-            try:
-                # Celdas de la primera línea a limpiar
-                first_line_cells = [
-                    f"J{first_line_row}",  # batch_id_value
-                    f"Z{first_line_row}",  # date_value_str
-                ]
+            write_cell(ws, f"B{second_line_row}", empty_value)
+            write_cell(ws, f"J{second_line_row}", empty_value)
+            write_cell(ws, f"AD{second_line_row}", empty_value)
+            write_cell(ws, f"AF{second_line_row}", empty_value)
+            write_cell(ws, f"AH{second_line_row}", empty_value)
+            write_cell(ws, f"R{second_line_row}", empty_value)
+            write_cell(ws, f"U{second_line_row}", empty_value)
+            write_cell(ws, f"V{second_line_row}", empty_value)
+            write_cell(ws, f"W{second_line_row}", empty_value)
+            write_cell(ws, f"Z{second_line_row}", empty_value)
 
-                # Celdas de la segunda línea a limpiar
-                second_line_cells = [
-                    f"J{second_line_row}",  # result_value
-                    f"Z{second_line_row}",
-                    f"AC{second_line_row}",  # date_value_str
-                    f"AF{second_line_row}",  # by_value
-                    f"AL{second_line_row}"  # batch_id_value
-                ]
+            success_count += 1
 
-                # Celdas de la segunda línea a limpiar
-                third_line_cells = [
-                    f"B{second_line_row}",  # result_value
-                    f"J{second_line_row}",
-                    f"R{second_line_row}",  # date_value_str
-                    f"V{second_line_row}",  # by_value
-                    f"Z{second_line_row}",
-                    f"AC{second_line_row}",
-                    f"AD{second_line_row}",
-                    f"AG{second_line_row}",
-                    f"AI{second_line_row}"
-                ]
+            if i % 10 == 0:
+                print(f"Limpiados {i} bloques...")
 
-                # Limpiar todas las celdas
-                for cell_ref in first_line_cells + second_line_cells + third_line_cells:
-                        print(cell_ref)
-                        ws[cell_ref].value = ''
-                        # Opcional: resetear el formato si es necesario
-                        # ws[cell_ref]._style = None
-
-                print(f"Bloque {block_num} limpiado en filas {first_line_row}-{second_line_row}")
-
-            except Exception as block_error:
-                print(f"Error al limpiar bloque {block_num}: {str(block_error)}")
-                continue
-
-        # Guardar cambios
-        print("Guardando workbook...")
-        if not safe_save_workbook(wb, route):
-            print("Error: No se pudo guardar el archivo después de varios intentos")
-            return False
-
-        print("Archivo guardado exitosamente con las celdas limpiadas")
+        print(f"Bloques limpiados exitosamente: {success_count}/{n_records}")
         return True
 
     except Exception as e:
         print(f"Error crítico: {str(e)}")
         traceback.print_exc()
         return False
-    finally:
-        if 'wb' in locals():
-            wb.close()
-        kill_excel_processes()
-
-
-
-
-# Ejecutar la función de limpieza
-clear_summary_data()

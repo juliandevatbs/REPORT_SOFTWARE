@@ -1,47 +1,65 @@
 import os
 import sys
-
 from openpyxl import load_workbook
-
-from scripts.excel.get_sheet_names import get_sheet_names
+import gc
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
+
+def get_sheet_names(file_path):
+    """
+    Get all sheet names from an Excel workbook.
+
+    Args:
+        file_path (str): Path to the Excel file
+
+    Returns:
+        list: List of sheet names
+    """
+    try:
+        wb = load_workbook(filename=file_path, read_only=True, keep_vba=False)
+        sheet_names = wb.sheetnames
+        wb.close()
+        return sheet_names
+    except Exception as e:
+        print(f"Error getting sheet names: {e}")
+        return []
+
+
 def get_chain_data():
+    """
+    Extract chain of custody data from the Excel file.
 
-    sheetname = 'Chain of Custody 1'
-    route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (4).xlsx"
-
+    Returns:
+        list: List of chain data entries
+    """
     all_data = []
+    route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (4).xlsx"
+    sheetname = 'Chain of Custody 1'
 
-    wb = None
+    # Verify file exists
+    if not os.path.exists(route):
+        print("Error: File not found")
+        return None
 
     try:
-
-        # Verify file exists
-        if not os.path.exists(route):
-            print("Error: File not found")
-            return None
-
         # Open workbook in read-only mode with data only (no formulas)
-        wb = load_workbook(filename=route, read_only=True, data_only=True)
+        wb = load_workbook(filename=route, read_only=True, data_only=True, keep_vba=False)
 
         # Verify sheet exists
         if sheetname not in wb.sheetnames:
             print(f"Error: Worksheet '{sheetname}' not found")
+            wb.close()
             return None
 
         ws = wb[sheetname]
 
-        # The important data starts at this row
-        start_row = 15
+        # Pre-load the constant values
+        analysis_requested = ws['AI5'].value
+        sampled_by = ws["B10"].value
 
-        specific_sheet = ['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X']
-
-        columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'Y']
-
+        # Pre-load the matrix codes dictionary
         matrix_codes = {
-
             'A': 'Air',
             'GW': 'Groundwater',
             'SE': 'Sediment',
@@ -50,164 +68,230 @@ def get_chain_data():
             'W': 'Water (Blanks)',
             'HW': 'Potencial Haz Wastw',
             'O': 'Other'
-
         }
 
-        is_data = True
+        # Pre-load sheet headers
+        sheet_headers = {}
+        for col in ['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X']:
+            sheet_headers[col] = {
+                'name': ws[f'{col}13'].value,
+                'number': ws[f'{col}12'].value
+            }
 
-        while True:
+        # The important data starts at this row
+        start_row = 15
+        max_row = 500  # Set a reasonable limit to avoid infinite loops
 
-            current_cell  = ws[f'B{start_row}'].value
+        # Define the columns to extract
+        columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'Y']
+        specific_sheet = ['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X']
 
-            if current_cell is None or current_cell == '' or current_cell == 'Shipment Method:':
+        # Pre-load the data range we need to process
+        data_range = []
+        for row_idx in range(start_row, max_row + 1):
+            row_values = {}
+            for col in columns + specific_sheet:
+                row_values[col] = ws[f'{col}{row_idx}'].value
+            data_range.append(row_values)
 
-                is_data = False
+            # Check if we've reached the end of data
+            if row_values['B'] is None or row_values['B'] == '' or row_values['B'] == 'Shipment Method:':
+                break
 
+        # Process the pre-loaded data
+        for row_data in data_range:
+            if row_data['B'] is None or row_data['B'] == '' or row_data['B'] == 'Shipment Method:':
                 break
 
             row = []
-
             for column in columns:
+                cell_value = row_data[column]
 
-                cell_value = ws[f'{column}{start_row}'].value
-
-                if column == 'G':
-
+                if column == 'G' and cell_value in matrix_codes:
                     matrix_id = matrix_codes[cell_value]
-
                     row.append(matrix_id)
                 else:
-
                     row.append(cell_value)
 
-            for sheet in specific_sheet:
+            row.append(sampled_by)
+            row.append(analysis_requested)
 
-                cell = ws[f'{sheet}{start_row}'].value
+            # Process specific sheets
+            for sheet in specific_sheet:
+                cell = row_data[sheet]
 
                 if cell == 1:
-
-                    sheet_name = ws[f'{sheet}13'].value
-                    number_sheet = ws[f'{sheet}12'].value
+                    sheet_name = sheet_headers[sheet]['name']
+                    number_sheet = sheet_headers[sheet]['number']
 
                     final_sheet = f'{sheet_name} ({number_sheet})'
-
                     row.append(final_sheet)
 
             all_data.append(row)
 
-            start_row += 1
+        wb.close()
+        gc.collect()  # Force garbage collection
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred in get_chain_data: {e}")
         return None
 
-    finally:
-
-        if wb is not None:
-
-            try:
-
-                wb.close()
-            except Exception as e:
-
-                print(f"Error closing workbook: {e}")
-
-    #print(all_data)
     return all_data
 
 
-def get_matrix_data(chain_data: list):
-    route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (4).xlsx"
+def get_matrix_data_flattened(route: str):
+    """
+    Process matrix data from Excel sheets and create flattened data structure.
+    Each analysis gets its own complete row with sample identification data.
+    """
+
+    chain_data = get_chain_data()
+    if chain_data is None or len(chain_data) == 0:
+        return None
+
+    HOJA_PREFIXES = [
+
+        "Alkalinity", "Ammonia", "Apparent Color", "Chlorides",
+        "Nitrates", "Nitrites", "Oil & Grease", "Ortho-phosphates",
+        "Sulfate", "Total Dissolved Solids", "Nitrogen",
+        "Total Hardness", "Phosphorous", "Total Solids",
+        "Total Suspended Solids", "Turbidity"
+    ]
 
     if not os.path.exists(route):
         print("Error: File not found")
         return None
 
+    # Get all sheet names once
+    sheets_in_excel = get_sheet_names(route)
+    print(f"Hojas disponibles en el Excel: {sheets_in_excel}")
+
+    # Create a dict for faster lookup of sample IDs
+    sample_id_dict = {row[1]: idx for idx, row in enumerate(chain_data) if len(row) > 1}
+
+    # Final flattened result list
+    flattened_results = []
+
     try:
-        wb = load_workbook(filename=route, read_only=True, data_only=True)
-        sheets_in_excel = get_sheet_names(route)
+        # Dictionary to store sheet data to avoid reopening the same sheet
+        sheet_cache = {}
 
-        cells_constant_value = [
-            'N19', 'N20', 'N21', 'N22', 'N23', 'N24'
-        ]
-
-
-
-
-
-
-        for row in chain_data:
-            constant_values = []
-
-
-
-            #print(row)
-            if len(row) < 1:
+        # Process each row in chain_data
+        for i, row in enumerate(chain_data):
+            if len(row) < 9:  # Ensure we have enough data
                 continue
 
-            sheet_name = row[-1]
+            sample_id = row[1]
+            print(f"\nProcesando muestra: {sample_id}")
 
-            ws = wb[sheet_name]
-            analysis_requested = ws['M7'].value
+            # Extract the base sample data (common for all analyses)
+            sample_id_data = row[:9]  # First 9 elements are identification data
 
-            for constant in cells_constant_value:
-                constant_values.append(ws[constant].value)
-            row.extend(constant_values)
+            # --- PASO 1: Filtrar y identificar nombres de hojas del row original ---
+            sheet_names_in_row = []
 
+            for item in row:
+                if (isinstance(item, str) and
+                        any(item.startswith(prefix) for prefix in HOJA_PREFIXES) and
+                        item in sheets_in_excel):
+                    sheet_names_in_row.append(item)
+                    print(f"  Hoja asociada encontrada: {item}")
 
-            if sheet_name in sheets_in_excel:
-                try:
-                    ws = wb[sheet_name]
-                    start_row = 26
-                    columns = ['B', 'C', 'D', 'E', 'F', 'H', 'I', 'J']
-                    found = False
+            # If no relevant sheets found, keep the original row
+            if not sheet_names_in_row:
+                print(f"  No se encontraron hojas relevantes para la muestra {sample_id}")
+                flattened_results.append(row)
+                continue
 
-                    #print(analysis_requested)
-                    row.append(analysis_requested)
+            print(f"  Se procesarán {len(sheet_names_in_row)} hojas para la muestra {sample_id}")
 
+            # --- PASO 2: Process each relevant sheet ---
+            for sheet_name in sheet_names_in_row:
+                print(f"  Procesando hoja: {sheet_name}")
 
+                # Check if we already processed this sheet
+                if sheet_name in sheet_cache:
+                    sheet_data = sheet_cache[sheet_name]
+                    print(f"    Usando datos en caché para {sheet_name}")
+                else:
+                    print(f"    Abriendo hoja {sheet_name}")
+                    # Open the workbook with just the needed sheet
+                    wb = load_workbook(filename=route, read_only=True, data_only=True, keep_vba=False)
 
+                    try:
+                        ws = wb[sheet_name]
 
+                        # Get constant values
+                        analysis_requested = ws['M7'].value
+                        cells_constant_value = ['N19', 'N20', 'N21', 'N22', 'N23', 'N24']
+                        constantes = [ws[cell].value for cell in cells_constant_value]
 
-                    while True:
-                        if ws[f'B{start_row}'].value == 'APPROVED BY':
-                            break
+                        # Pre-load all sample data from this sheet
+                        samples_in_sheet = {}
+                        start_row = 26
+                        columns = ['B', 'C', 'D', 'E', 'F', 'H', 'I', 'J']
 
-                        cell_value = ws[f'C{start_row}'].value
-                        if cell_value == row[1]:
-                            row_data = []
-                            for column in columns:
-                                row_data.append(ws[f'{column}{start_row}'].value)
-                            row.extend(row_data)
+                        while True:
+                            if ws[f'B{start_row}'].value == 'APPROVED BY':
+                                break
 
-                            found = True
-                            break
+                            current_sample_id = ws[f'C{start_row}'].value
+                            if current_sample_id and current_sample_id in sample_id_dict:
+                                # Extract all values except the sample ID (column C) which is redundant
+                                sample_values = []
+                                for column in columns:
+                                    if column != 'C':  # Skip sample ID column
+                                        sample_values.append(ws[f'{column}{start_row}'].value)
 
-                        start_row += 1
-                        if start_row > 1000:
-                            break
+                                samples_in_sheet[current_sample_id] = sample_values
+                                print(f"    Encontrada muestra {current_sample_id} en fila {start_row}")
 
+                            start_row += 1
+                            if start_row > 1000:  # Safety limit
+                                break
 
-                except Exception as e:
-                    print(f"Error processing sheet {sheet_name}: {e}")
-                    continue
+                        sheet_data = {
+                            'analysis_requested': analysis_requested,
+                            'constantes': constantes,
+                            'samples': samples_in_sheet
+                        }
+
+                        # Cache the sheet data
+                        sheet_cache[sheet_name] = sheet_data
+
+                    except Exception as e:
+                        print(f"    Error procesando hoja {sheet_name}: {e}")
+                        sheet_data = None
+
+                    wb.close()
+                    gc.collect()
+
+                # Use the sheet data if available
+                if sheet_data and sample_id in sheet_data['samples']:
+                    # Create a new flattened row for this analysis
+                    flattened_row = sample_id_data.copy()  # Start with sample identification data
+
+                    # Add analysis data (removing the sample ID which is redundant)
+                    analysis_data = [sheet_name, sheet_data['analysis_requested']] + sheet_data['constantes']
+
+                    # Add sample specific measurements (excluding sample ID which is already in flattened_row)
+                    sample_measurements = sheet_data['samples'][sample_id]
+
+                    # Combine all data into one flattened row
+                    flattened_row.extend(analysis_data + sample_measurements)
+
+                    # Add this flattened row to results
+                    flattened_results.append(flattened_row)
+                    print(f"    Agregada fila aplanada con {len(flattened_row)} elementos para {sheet_name}")
+                else:
+                    print(f"    No se encontraron datos para la muestra {sample_id} en la hoja {sheet_name}")
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Error general in get_matrix_data_flattened: {e}")
         return None
-    finally:
-        if 'wb' in locals():
-            try:
-                wb.close()
-            except Exception as e:
-                print(f"Error closing workbook: {e}")
 
-    for row in chain_data:
-        print(row)
+    return flattened_results
 
-    return chain_data
-
-get_matrix_data(get_chain_data())
 
 
 

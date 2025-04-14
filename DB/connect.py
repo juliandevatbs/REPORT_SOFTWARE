@@ -18,16 +18,16 @@ def connect_db():
         db_name= os.getenv("DB_NAME")
         db_user= os.getenv("DB_USER")
         db_password= os.getenv("DB_PASSWORD")
-        
+
         # Connection string to SQL SERVER
         connection_string=f"""
-            DRIVER=SQL Server;
+            DRIVER={{SQL Server}};
             SERVER={db_server};
-            DATABASE=SRLSQL;
-            UID=juliandevuser;
-            PWD=devUserdb@1;
+            DATABASE={db_name};
+            UID={db_user};
+            PWD={db_password};
         """
-        #print(connection_string)
+
         # Connection
         connection= pyodbc.connect(connection_string)
         cursor= connection.cursor()
@@ -39,6 +39,5 @@ def connect_db():
         
         print(f"Error al conectar a SQL Server: {e}")
         return None, None
-    
-    
+
 connect_db()

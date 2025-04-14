@@ -1,118 +1,124 @@
-import os
-import subprocess
+import re
 import sys
-import time
+import os
 
-from openpyxl import load_workbook
-from openpyxl.styles import Font
-from openpyxl.utils import get_column_letter
+from openpyxl.cell import MergedCell
+from openpyxl.utils import column_index_from_string
 
-def safe_save_workbook(wb, route, max_attempts=3):
-    """Intenta guardar el workbook con reintentos y manejo de errores"""
-    for attempt in range(max_attempts):
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.excel.connect_excel import get_excel
+from scripts.get.get_header_data import get_header_data
+from scripts.error.show_error import show_info
+from scripts.utils.write_cell import  write_cell
 
-        try:
-            # Cerrar Excel antes de guardar
-            kill_excel_processes()
-            time.sleep(1)  # Esperar para asegurar cierre
+def clean_header_data(wb, ws, route: str, sheet_name: str):
+    """
+        Writes header data to specified Excel report template.
 
-            # Guardar con backup
-            temp_route = route + ".temp"
-            wb.save(temp_route)
+        This function:
+        1. Opens the specified Excel file and worksheet
+        2. Retrieves header data from a source Excel file
+        3. Writes the header information to designated cells in the template
+        4. Saves the modified workbook
 
-            # Reemplazar archivo original
-            if os.path.exists(route):
-                os.remove(route)
-            os.rename(temp_route, route)
+        Parameters:
+            excel_route (str): Path to the destination Excel template file
+            sheet_name (str): Name of the worksheet to modify
 
-            print(f"Workbook saved successfully on attempt {attempt + 1}")
-            return True
-        except Exception as e:
-            print(f"Attempt {attempt + 1} failed {str(e)}")
-            time.sleep(2)  # Wait before retrying
-    return False
+        Returns:
+            bool: True if operation completed successfully
+            None: If operation failed
 
-
-def kill_excel_processes():
-    """Cierra todos los procesos de Excel"""
-    try:
-        subprocess.run(["taskkill", "/f", "/im", "excel.exe"],
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL)
-        time.sleep(1)
-    except:
-        pass
-
-
-def clean_header():
-    sheet_name = "Reporte"
-    route = r"C:\Users\Duban Serrano\Desktop\REPORTES PYTHON\excel\Reporte 2025-03-12 (3).xlsx"
-
-    wb = None
+        Raises:
+            Prints errors to console and shows user-friendly messages via show_info()
+        """
 
     try:
-        # Verify file exists and is accessible
-        if not os.path.exists(route):
-            print(f"Error: File not found at {route}")
-            return False
 
-        # Open workbook with different options
-        wb = load_workbook(filename=route, read_only=False, data_only=True)
 
-        # Verify sheet exists
-        if sheet_name not in wb.sheetnames:
-            print(f"Error: Worksheet '{sheet_name}' not found")
-            return False
 
-        ws = wb[sheet_name]
+        empty_value = ''
+        # No Apllicaton string
+        na_value = 'No Application'
 
-        # Cells to clear with comprehensive clearing strategy
-        cells_to_clear = [
-            'K7', 'K8', 'K9', 'K43', 'K10', 'K40', 'K41', 'K42',
-            'I44', 'I11', 'M44', 'M11',
-            'AK42', 'AK9', 'AI44'
-        ]
+        # Write data cells
+        write_cell(ws, "H7", empty_value)
+        write_cell(ws, "H42", empty_value)
+        write_cell(ws, "H120", empty_value)
+        write_cell(ws, "H200", empty_value)
 
-        # Advanced clearing strategy
-        for cell_ref in cells_to_clear:
-            cell = ws[cell_ref]
+        write_cell(ws, "H8", empty_value)
+        write_cell(ws, "H43", empty_value)
+        write_cell(ws, "H121", empty_value)
+        write_cell(ws, "H201", empty_value)
+        write_cell(ws, "H251", empty_value)
 
-            # Multiple clearing techniques
-            cell.value = ''  # First method: Set value to empty string
-            cell.font = Font(name=cell.font.name, size=cell.font.size)  # Reset font without changing
+        write_cell(ws, "H9", empty_value)
+        write_cell(ws, "H44", empty_value)
+        write_cell(ws, "H122", empty_value)
+        write_cell(ws, "H202", empty_value)
+        write_cell(ws, "H252", empty_value)
 
-            print(f"Cell {cell_ref}: Cleared (Original value: {cell.value})")
+        write_cell(ws, "H10", empty_value)
+        write_cell(ws, "H45", empty_value)
+        write_cell(ws, "H123", empty_value)
+        write_cell(ws, "H203", empty_value)
+        write_cell(ws, "H253", empty_value)
 
-        # Disable Excel protection if present
-        if hasattr(ws, 'protection'):
-            ws.protection.sheet = False
+        write_cell(ws, "H11", empty_value)
+        write_cell(ws, "H46", empty_value)
+        write_cell(ws, "H124", empty_value)
+        write_cell(ws, "H204", empty_value)
+        write_cell(ws, "H254", empty_value)
 
-        # Save the workbook using safe save method
-        save_success = safe_save_workbook(wb, route)
-        if not save_success:
-            print("Failed to save the workbook after multiple attempts")
-            return False
+        write_cell(ws, "M11", empty_value)
+        write_cell(ws, "M46", empty_value)
+        write_cell(ws, "M124", empty_value)
+        write_cell(ws, "M204", empty_value)
+        write_cell(ws, "M254", empty_value)
 
-        print("Cells cleared and workbook saved successfully")
-        return True
+        write_cell(ws, "AG6", empty_value)
+        write_cell(ws, "AG41", empty_value)
+        write_cell(ws, "AG119", empty_value)
+        write_cell(ws, "AG199", empty_value)
+        write_cell(ws, "AG249", empty_value)
+
+        write_cell(ws, "AG7", empty_value)
+        write_cell(ws, "AG42", empty_value)
+        write_cell(ws, "AG120", empty_value)
+        write_cell(ws, "AG200", empty_value)
+        write_cell(ws, "AG250", empty_value)
+
+        write_cell(ws, "AG8", empty_value)
+        write_cell(ws, "AG43", empty_value)
+        write_cell(ws, "AG120", empty_value)
+        write_cell(ws, "AG201", empty_value)
+        write_cell(ws, "AG251", empty_value)
+
+        write_cell(ws, "AG9", empty_value)
+        write_cell(ws, "AG44", empty_value)
+        write_cell(ws, "AG122", empty_value)
+        write_cell(ws, "AG202", empty_value)
+        write_cell(ws, "AG252", empty_value)
+
+        write_cell(ws, "AG10", empty_value)
+        write_cell(ws, "AG45", empty_value)
+        write_cell(ws, "AG123", empty_value)
+        write_cell(ws, "AG203", empty_value)
+        write_cell(ws, "AG253", empty_value)
+
+        write_cell(ws, "AG11", empty_value)
+        write_cell(ws, "AG46", empty_value)
+        write_cell(ws, "AG124", empty_value)
+        write_cell(ws, "AG204", empty_value)
+        write_cell(ws, "AG254", empty_value)
 
     except Exception as e:
-        print(f"Unexpected error occurred: {e}")
-        import traceback
-        traceback.print_exc()  # This will print the full traceback
+
+        show_info(f"Failed to write data, error: {e}")
+        print(f"Failed to write data, error: {e}")
         return False
 
-    finally:
-        # Clean up resources
-        if wb is not None:
-            try:
-                wb.close()
-            except Exception as e:
-                print(f"Error closing workbook: {e}")
+    return True
 
 
-# Run the function
-if __name__ == "__main__":
-    result = clean_header()
-    print(f"Script execution result: {'Success' if result else 'Failure'}")
-    sys.exit(0 if result else 1)

@@ -1,129 +1,106 @@
+import re
 import sys
 import os
-import traceback
 import time
-import subprocess
+import psutil
+import traceback
+from openpyxl.cell import MergedCell
+from openpyxl.reader.excel import load_workbook
+from openpyxl.utils import column_index_from_string
+
+from scripts.blocks.test import copy_range_with_styles
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from get.get_header_data import get_header_data
-from excel.connect_excel import get_excel
+from scripts.excel.connect_excel import get_excel
+from scripts.get.get_header_data import get_header_data
+from scripts.error.show_error import show_info
+from scripts.utils.kill_excel_processes import kill_excel_processes
 
-"""
-    This function print the header data in the excel cells
-"""
-
-def print_header_data():
-    
-    wb = None
-    
-    try:
-        kill_excel_processes()
-        
-        sheet_name= "Reporte"
-        
-        route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (4).xlsx"
-
-        wb, ws = get_excel(sheet_name, route)
-        
-        if not (wb and ws):
-            
-            print("Excel cannot be opened")
-            return False
-        
-        
-        # Get the header data
-        #print(get_header_data())
-        client, address, city, company_phone, zip_code, state = get_header_data()
-        
-        # Make  sure that the data is a string 
-        client_str = str(client) if client is not None else ""
-        address_str = str(address) if address is not None else ""
-        city_str = str(city) if city is not None else ""
-        phone_str=  str(company_phone) if company_phone is not  None else ""
-        zip_str=  str(zip_code) if zip_code is not None else ""
-        state_str= str(state) if state is not None else ""
-        
-        #NA value
-        na_value= 'NA'
-                
-        # Write data cells
-        print("Writing data")
-        ws['K7'].value = client_str
-        ws['K40'].value = client_str
-        ws['K41'].value = client_str
-        ws['K8'].value = client_str
-        ws['K9'].value = address_str
-        ws['K42'].value = address_str
-        ws['K10'].value = city_str
-        ws['K43'].value = city_str
-        ws['AK9'].value = phone_str
-        ws['AK42'].value = phone_str
-        ws['M11'].value = zip_str
-        ws['M44'].value = zip_str
-        ws["I11"].value= state_str
-        ws["I44"].value= state_str
-        
-        # Facility  Id and Client´s  Project Number are NA
-        ws["AK7"].value= na_value
-        ws["AK40"].value= na_value
-        ws["AK10"].value= na_value
-        ws["AK43"].value= na_value
-        
-        # Save the file
-        wb.save(route)
-        
-        # Wait a while for the saving process to complete
-        time.sleep(1)
-        
-        print("File saved succesfully")
-        
-        return True
-        
-    except Exception as e:
-        
-        traceback.print_exc()
-        
-        return False
-    
-    finally:
-        
-        # Make sure that the excel is close
+def check_file_locks(filepath):
+    """Verifica si el archivo está bloqueado por otro proceso"""
+    for proc in psutil.process_iter():
         try:
-            if wb is not None:
-                
-                print("Closing the book")
-                
-                try:
-                    wb.close(SaveChanges=True)
-                     
-                except:
-                    pass
+            files = proc.open_files()
+            for f in files:
+                if filepath.lower() == f.path.lower():
+                    return True
+        except (psutil.AccessDenied, psutil.NoSuchProcess):
+            continue
+    return False
 
-            time.sleep(2)
-            kill_excel_processes()
-                
-            
-        except Exception as e:
-            
-            print("FAILED")
-                
-#Function to close or kill the excel processes before we start printing data to it            
-def kill_excel_processes():
-    
-    """Finish all excel process"""
-    
+
+def write_cell(ws, celda_coord, valor):
+    """Versión mejorada con mejor manejo de errores"""
     try:
-        subprocess.run(["taskkill", "/f", "/im", "excel.exe"], 
-                      stdout=subprocess.DEVNULL, 
-                      stderr=subprocess.DEVNULL)
-    except:
-        print("Excel processes could not be completed or there were none.")
+        match = re.match(r'([A-Za-z]+)(\d+)', celda_coord)
+        if not match:
+            return False
+
+        col_str, row_str = match.groups()
+        row = int(row_str)
+        col = column_index_from_string(col_str)
+
+        celda = ws.cell(row=row, column=col)
+
+        if not isinstance(celda, MergedCell):
+            celda.value = valor
+            return True
+
+        for rango in ws.merged_cells.ranges:
+            min_row, min_col, max_row, max_col = rango.min_row, rango.min_col, rango.max_row, rango.max_col
+            if min_row <= row <= max_row and min_col <= col <= max_col:
+                ws.cell(row=min_row, column=min_col).value = valor
+                return True
+
+        return False
+    except Exception as e:
+        print(f"Error writing cell {celda_coord}: {str(e)}")
+        return False
 
 
+def print_header_data(wb, ws, header_data):
+    """Versión mejorada con manejo robusto de archivos"""
+    try:
 
-# Function to  merge
-def write_and_save ():
-    print_header_data()
-    kill_excel_processes()    
-    
+        # Procesar datos
+        na_value = 'No Application'
+        fields = {
+            "company_name": str(header_data[0] if header_data[0] else na_value),
+            "client_name": str(header_data[1] if header_data[1] else na_value),
+            "client_address": str(header_data[2] if header_data[2] else na_value),
+            "city": str(header_data[3] if header_data[3] else na_value),
+            "state": str(header_data[4] if header_data[4] else na_value),
+            "zip_code": str(header_data[5] if header_data[5] else na_value),
+            "facility_id": str(header_data[6] if header_data[6] else na_value),
+            "requested_data": str(header_data[7] if header_data[7] else na_value),
+            "project_location": str(header_data[8] if header_data[8] else na_value),
+            "client_phone": str(header_data[9] if header_data[9] else na_value),
+            "project_number": str(header_data[10] if header_data[10] else na_value),
+            "lab_reporting_batch_id": str(header_data[11] if header_data[11] else na_value)
+        }
 
-write_and_save()
+        cell_mapping = {
+            "company_name": ["H7", "H42", "H120", "H200"],
+            "client_name": ["H8", "H43", "H121", "H201", "H251"],
+            "client_address": ["H9", "H44", "H122", "H202", "H252"],
+            "city": ["H10", "H45", "H123", "H203", "H253"],
+            "state": ["H11", "H46", "H124", "H204", "H254"],
+            "zip_code": ["M11", "M46", "M124", "M204", "M254"],
+            "requested_data": ["AG6", "AG41", "AG119", "AG199", "AG249"],
+            "facility_id": ["AG7", "AG42", "AG120", "AG200", "AG250"],
+            "project_location": ["AG8", "AG43", "AG121", "AG201", "AG251"],
+            "client_phone": ["AG9", "AG44", "AG122", "AG202", "AG252"],
+            "project_number": ["AG10", "AG45", "AG123", "AG203", "AG253"],
+            "lab_reporting_batch_id": ["AG11", "AG46", "AG124", "AG204", "AG254"]
+        }
+
+        for field, cells in cell_mapping.items():
+            for cell in cells:
+                if not write_cell(ws, cell, fields[field]):
+                    print(f"Error escribiendo {field} en {cell}")
+
+    except Exception as e:
+        show_info(f"Error crítico: {str(e)}")
+        traceback.print_exc()
+        return False
+

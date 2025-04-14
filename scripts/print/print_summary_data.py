@@ -5,189 +5,199 @@ from datetime import datetime
 import sys
 import os
 import time
+import re
+from openpyxl.cell.cell import MergedCell
+from openpyxl.utils import column_index_from_string, get_column_letter
 
 # Configuración de rutas
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from scripts.filter_merge.filter_analytic_data import filter_analytic_data
-from scripts.filter_merge.merge_lab_analytic import merge_lab_analytic
-from scripts.get import get_analysis_requested
-from scripts.get.get_all_data import get_chain_data
-from scripts.get.get_all_data import get_matrix_data
+
+from scripts.get.get_all_data import *
+from scripts.utils.safe_save import safe_save_workbook
 
 
+def group_by_sheet(row_data):
 
-def safe_save_workbook(wb, route, max_attempts=3):
-    """Intenta guardar el workbook con reintentos y manejo de errores"""
-    for attempt in range(max_attempts):
-        try:
-            kill_excel_processes()
-            time.sleep(1)
+    """Agrupa los datos por nombre de hoja (primer elemento de cada sublista)"""
+    sheets_dict = {}
 
-            temp_route = route + ".temp"
-            wb.save(temp_route)
+    for row in row_data:
+        for ro in row:
+            print(ro)
 
-            if os.path.exists(route):
-                os.remove(route)
-            os.rename(temp_route, route)
+def write_cell(ws, celda_coord, valor):
+    """
+    Escribe un valor en una celda, incluso si es parte de un rango combinado.
 
+    Args:
+        ws: Hoja de trabajo
+        celda_coord: Coordenada de la celda (ej: 'B13')
+        valor: Valor a escribir
+
+    Returns:
+        bool: True si se pudo escribir, False en caso contrario
+    """
+    try:
+
+        match = re.match(r'([A-Za-z]+)(\d+)', celda_coord)
+        if not match:
+            return False
+
+        col_str, row_str = match.groups()
+        row = int(row_str)
+        col = column_index_from_string(col_str)
+
+        # Intentar obtener la celda directamente
+        celda = ws.cell(row=row, column=col)
+
+        # Si no es una celda combinada, escribir directamente
+        if not isinstance(celda, MergedCell):
+            celda.value = valor
             return True
-        except Exception as e:
-            print(f"Intento {attempt + 1} de guardar falló: {str(e)}")
-            time.sleep(2)
-    return False
+
+        for rango in ws.merged_cells.ranges:
+            min_row, min_col, max_row, max_col = rango.min_row, rango.min_col, rango.max_row, rango.max_col
+
+            if min_row <= row <= max_row and min_col <= col <= max_col:
+                celda_principal = ws.cell(row=min_row, column=min_col)
+                celda_principal.value = valor
+                return True
+
+        return False
+
+    except Exception as e:
+        return False
+
+
+
 
 
 def should_write_block(data_block):
-    """Determina si el bloque debe escribirse según la condición data_block[18] > data_block[12]"""
+    """Determina si el bloque debe escrib12irse según la condición data_block[18] > data_block[12]"""
     try:
-        # Verificar que ambos valores existan y sean comparables
-        if len(data_block) < 19:
+
+        value_result = float(data_block[18]) if data_block[18] is not None else None
+        value_df = float(data_block[13]) if data_block[13] is not None else None
+
+        if value_result is None or value_df is None:
             return False
 
-        value_18 = float(data_block[18]) if data_block[18] is not None else None
-        value_12 = float(data_block[12]) if data_block[12] is not None else None
-
-        if value_18 is None or value_12 is None:
-            return False
-
-        return value_18 > value_12
+        return value_result > value_df
     except (ValueError, TypeError):
         return False
 
+def validate_data_block(data_block):
+    if not isinstance(data_block, list):
+        return False
+    return True
+
+def format_date(value):
+    if isinstance(value, datetime):
+        return value.strftime('%Y-%m-%d')
+    return str(value) if value is not None else ""
+
 
 def write_data_block(ws, data_block, first_line_row):
-    """Escribe un bloque de datos válido en las filas especificadas"""
     try:
-        # Extraer datos
-        sw_code = str(data_block[1])
-        lab_sample_id = str(data_block[7])
-        date_value = data_block[2]
-        by_value = str(data_block[20])
-        result_value = data_block[18]
-        batch_id_value = data_block[7]
-        matrix_id_value = data_block[5]
-        method_analyzed = data_block[15]
-        units_value = data_block[14]
-        df_value = data_block[11]
-        mdl_value = data_block[12]
-        pql_value = data_block[13]
+        if not validate_data_block(data_block):
+            return False
 
-        # Formatear fechas
-        date_value_str = date_value.strftime('%Y-%m-%d') if isinstance(date_value, datetime) else str(date_value)
+        sw_code = str(data_block[1]) if data_block[1] is not None else ""
+        date_value = f"{format_date(data_block[2])} {data_block[3]}"
+        by_value = str(data_block[8]) if data_block[8] is not None else ""
+        result_value = data_block[18] if data_block[18] is not None else ""
+        batch_id_value = data_block[7] if data_block[7] is not None else ""
+        matrix_id_value = data_block[5] if data_block[5] is not None else ""
+        df_value = data_block[13]
+        mdl_value = data_block[14]
+        pql_value = data_block[15]
+        units_value = data_block[16]
+        analyzed_method = data_block[10]
+        analyte_name = data_block[9]
+        notes = data_block[19]
 
-        # Definir posiciones de filas
         second_line_row = first_line_row + 2
 
+        cell_mapping = {
+            f"B{first_line_row}": sw_code,
+            f"J{first_line_row}": batch_id_value,
+            f"R{first_line_row}": date_value,
+            f"Z{first_line_row}": by_value,
+            f"AJ{first_line_row}": matrix_id_value,
+            f"B{second_line_row}": analyte_name,
+            f"J{second_line_row}": result_value,
+            f"AD{second_line_row}": date_value,
+            f"AF{second_line_row}": by_value,
+            f"AH{second_line_row}": batch_id_value,
+            f"R{second_line_row}": units_value,
+            f"U{second_line_row}": df_value,
+            f"V{second_line_row}": mdl_value,
+            f"W{second_line_row}": pql_value,
+            f"Z{second_line_row}": analyzed_method,
+            f"AJ{second_line_row}": ''
+        }
 
-        # Primera línea
-        ws[f"B{first_line_row}"] = sw_code
-        ws[f"R{first_line_row}"] = date_value_str
-        ws[f"J{first_line_row}"] = batch_id_value
-        ws[f"Z{first_line_row}"] = by_value
-        ws[f"AJ{first_line_row}"] = matrix_id_value
-
-        # Segunda línea
-        ws[f"J{second_line_row}"] = result_value
-        ws[f"R{second_line_row}"] = units_value
-        ws[f"U{second_line_row}"] = df_value
-        ws[f"V{second_line_row}"] = mdl_value
-        ws[f"W{second_line_row}"] = pql_value
-        ws[f"Z{second_line_row}"] = method_analyzed
-        ws[f"AD{second_line_row}"] = date_value_str
-        ws[f"AF{second_line_row}"] = by_value
-        ws[f"AH{second_line_row}"] = lab_sample_id
-
-
+        for cell, value in cell_mapping.items():
+            ws[cell] = value
 
         return True
+
     except Exception as e:
-        print(f"Error al escribir bloque: {str(e)}")
+        print(f"ERROR FATAL EN {data_block[9]}: {str(e)}")
+        traceback.print_exc()
         return False
 
 
-def print_summary_data():
-    """Escribe datos analíticos en la hoja de reporte"""
+def print_summary_data(wb, ws, row_data):
     try:
-        # Configuración
+        # Configuración (igual que la original)
         config = {
             "sheetname": "Reporte",
-            "filepath": r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (4).xlsx",
-            "start_row": 114,
+            "start_row": 140,
             "row_spacing": 5
         }
 
-        # Obtener datos
-        print("Obteniendo datos analíticos...")
-        row_data = get_matrix_data(get_chain_data())
-
         if not row_data:
-            print("Error: No hay datos para escribir")
+            print("No hay datos para escribir")
             return False
 
-        # Verificar archivo
-        if not os.path.exists(config["filepath"]):
-            print(f"Error: Archivo no encontrado en {config['filepath']}")
-            return False
 
-        # Abrir archivo Excel
-        print("Abriendo workbook...")
-        try:
-            wb = load_workbook(filename=config["filepath"])
-            ws = wb[config["sheetname"]]
-        except Exception as e:
-            print(f"Error al abrir el archivo: {str(e)}")
-            return False
 
-        # Procesar datos
-        print(f"Procesando {len(row_data)} bloques de datos...")
-        valid_blocks = 0
+        grouped_data = {}
+        ordered_analytes = []
+
+        # Filtro modificado: solo datos donde posición 19 > posición 13
+        for data_block in row_data:
+            print(data_block[19])
+            print(data_block[13])
+            if validate_data_block(data_block) and data_block[19] > data_block[13]:
+                analyte_name = data_block[9] or "Sin Nombre"
+                if analyte_name not in grouped_data:
+                    grouped_data[analyte_name] = []
+                    ordered_analytes.append(analyte_name)
+                grouped_data[analyte_name].append(data_block)
+
+        # El resto del código es igual que la función original
+        success_count = 0
         current_row = config["start_row"]
 
-        for block_num, data_block in enumerate(row_data):
-            if not isinstance(data_block, list):
-                print(f"Bloque {block_num} no es una lista - omitiendo")
-                continue
-
-            # Verificar condición data_block[18] > data_block[12]
-            if should_write_block(data_block):
+        for analyte in ordered_analytes:
+            for data_block in grouped_data[analyte]:
+                print(len(data_block))
+                print(data_block[9])
+                print(data_block[18])
                 if write_data_block(ws, data_block, current_row):
-                    valid_blocks += 1
-                    print(f"Bloque {block_num} escrito en fila {current_row}")
+                    success_count += 1
                     current_row += config["row_spacing"]
+                    print(f"Escrito bloque para analito: {analyte} en fila {current_row}")
                 else:
-                    print(f"Error al escribir bloque {block_num} válido")
-            else:
-                print(f"Bloque {block_num} no cumple condición (18 > 12) - omitiendo")
+                    print(f"Error escribiendo bloque para analito: {analyte}")
 
-        print(f"{valid_blocks} bloques válidos escritos de {len(row_data)} totales")
-
-        # Guardar cambios
-        print("Guardando workbook...")
-        if not safe_save_workbook(wb, config["filepath"]):
-            print("Error: No se pudo guardar el archivo")
-            return False
-
-        print("Archivo guardado exitosamente")
+        print(f"Bloques escritos exitosamente: {success_count}/{len(row_data)}")
         return True
 
     except Exception as e:
         print(f"Error crítico: {str(e)}")
         traceback.print_exc()
         return False
-    finally:
-        if 'wb' in locals():
-            wb.close()
-        kill_excel_processes()
 
-
-def kill_excel_processes():
-    """Cierra todos los procesos de Excel"""
-    try:
-        subprocess.run(["taskkill", "/f", "/im", "excel.exe"],
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL)
-        time.sleep(1)
-    except:
-        pass
-
-print_summary_data()

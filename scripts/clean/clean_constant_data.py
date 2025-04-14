@@ -44,15 +44,15 @@ def kill_excel_processes():
     except:
         pass
 
-def clean_constant_data():
+def clean_constant_data(start_row, num_blocks):
     """Limpia los datos analíticos en la hoja de reporte"""
     try:
         # Configuración
         sheetname = "Reporte"
-        route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (3).xlsx"
-        start_row = 114
+        route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (4).xlsx"
+        start_row = start_row
         row_spacing = 5
-        num_blocks = 13
+        num_blocks = num_blocks
 
         # Verificar si el archivo existe
         if not os.path.exists(route):
@@ -78,11 +78,9 @@ def clean_constant_data():
             try:
                 # Celdas de la primera línea a limpiar
                 first_line_cells = [
-                    f"J{first_line_row}",  # sw_code
-                    f"J{first_line_row}",  # batch_id_value
                     f"R{first_line_row}",  # date_value_str
-                    f"Z{first_line_row}",  # by_value
-                    f"AJ{first_line_row}"  # matrix_id_value
+                    f"U{first_line_row}",  # by_value
+                    f"V{first_line_row}"  # matrix_id_value
                 ]
 
                 # Celdas de la segunda línea a limpiar
