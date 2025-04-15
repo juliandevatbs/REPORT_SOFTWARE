@@ -60,10 +60,6 @@ def write_cell(ws, celda_coord, valor):
 
     except Exception as e:
         return False
-
-
-
-
         celda = ws.cell(row=row, column=col)
 
         if not isinstance(celda, MergedCell):
@@ -94,8 +90,9 @@ def print_lab_data(wb, ws, chain_data):
             print("Error: Datos en formato incorrecto.")
             return False
 
-        start_row = 14
+        start_row = 15
         for row_data in chain_data:
+
             write_cell(ws, f"B{start_row}", row_data[0])
             write_cell(ws, f"H{start_row}", row_data[7])
             write_cell(ws, f"K{start_row}", row_data[1])
@@ -104,7 +101,7 @@ def print_lab_data(wb, ws, chain_data):
             write_cell(ws, f"AC{start_row}", row_data[5])
             write_cell(ws, f"AF{start_row}", row_data[9])
             start_row += 1
-
+        wb.save(r"C:\Users\Duban Serrano\Desktop\REPORTES PYTHON\excel\Reporte 2025-03-12 (4).xlsx")
         print("¡Datos escritos exitosamente!")
         return True
 
@@ -112,3 +109,6 @@ def print_lab_data(wb, ws, chain_data):
         print(f"Error en print_lab_data: {e}")
         traceback.print_exc()
         return False
+
+
+

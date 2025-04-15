@@ -9,7 +9,7 @@ from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
 
-def get_excel(sheet_name, route):
+def get_excel(route):
     """
     Opens an Excel workbook and returns the workbook object and the specified worksheet.
 
@@ -41,25 +41,19 @@ def get_excel(sheet_name, route):
         print(f"Opening Excel file: {route}")
         wb = load_workbook(filename=route, read_only=False, keep_vba=False)
 
-        # Verify the requested sheet exists
-        if sheet_name not in wb.sheetnames:
-            available_sheets = ", ".join(wb.sheetnames)
-            print(f"ERROR: Sheet '{sheet_name}' not found in workbook. Available sheets: {available_sheets}")
-            wb.close()
-            return None, None
 
-        ws = wb[sheet_name]
-        print(f"✓ Successfully opened workbook and accessed sheet '{sheet_name}'")
-        return wb, ws
+
+
+        return wb
 
     except InvalidFileException:
         print(f"ERROR: The file {route} is not a valid Excel file or is corrupted.")
         print("Try opening and resaving the file in Excel to fix potential corruption issues.")
-        return None, None
+        return None
     except KeyError as e:
         print(f"ERROR: Excel file appears to be corrupt or in an incompatible format: {str(e)}")
         print("The file might be in a format not supported by openpyxl (like .xls) or may be corrupt.")
-        return None, None
+        return None
     except PermissionError:
         print(
             f"ERROR: Cannot access {route}. The file may be open in another application or you lack permission to access it.")
@@ -67,5 +61,5 @@ def get_excel(sheet_name, route):
     except Exception as e:
         print(f"ERROR in get_excel: {str(e)}")
         traceback.print_exc()
-        return None, None
+        return None
 
