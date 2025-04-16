@@ -33,25 +33,10 @@ def header_space(wb, wsd, init_row: int):
         project_number_spacing = client_phone_spacing + 1
         lab_reporting_batch_spacing = project_number_spacing +1
 
-        cell_mapping = {
-
-            "company_name": [f"G{company_spacing}", f"G{company_spacing}", f"G{company_spacing}", f"G{company_spacing}"],
-            "client_name": [f"G{clients_spacing}", f"G{clients_spacing}", f"G{clients_spacing}", f"G{clients_spacing}", f"G{clients_spacing}"],
-            "client_address": [f"G{adress_spacing}", f"G{adress_spacing}", f"G{adress_spacing}", f"G{adress_spacing}", f"G{adress_spacing}"],
-            "city": [f"G{city_spacing}", f"G{city_spacing}", f"G{city_spacing}", f"G{city_spacing}", f"G{city_spacing}"],
-            "state": [f"G{state_spacing}", f"G{state_spacing}", f"G{state_spacing}", f"G{state_spacing}", f"G{state_spacing}"],
-            "zip_code": [f"L{zip_spacing}", f"L{zip_spacing}", f"L{zip_spacing}", f"L{zip_spacing}", f"L{zip_spacing}"],
-            "requested_data": [f"AF{requested_data_spacing}", f"AF{requested_data_spacing}", f"AF{requested_data_spacing}", f"AF{requested_data_spacing}", f"AF{requested_data_spacing}"],
-            "facility_id": [f"AF{facility_id_spacing}", f"AF{facility_id_spacing}", f"AF{facility_id_spacing}", f"AF{facility_id_spacing}", f"AF{facility_id_spacing}"],
-            "project_location": [f"AF{project_location_spacing}", f"AF{project_location_spacing}", f"AF{project_location_spacing}", f"AF{project_location_spacing}", f"AF{project_location_spacing}"],
-            "client_phone": [f"AF{client_phone_spacing}", f"AF{client_phone_spacing}", f"AF{client_phone_spacing}", f"AF{client_phone_spacing}", f"AF{client_phone_spacing}"],
-            "project_number": [f"AF{project_number_spacing}", f"AF{project_number_spacing}", f"AF{project_number_spacing}", f"AF{project_number_spacing}", f"AF{project_number_spacing}"],
-            "lab_reporting_batch_id": [f"AF{lab_reporting_batch_spacing}", f"AF{lab_reporting_batch_spacing}", f"AF{lab_reporting_batch_spacing}", f"AF{lab_reporting_batch_spacing}", f"AF{lab_reporting_batch_spacing}"]
-
-        }
+        spacing_data = [company_spacing, clients_spacing, adress_spacing, city_spacing, state_spacing, zip_spacing, requested_data_spacing, facility_id_spacing, project_location_spacing, client_phone_spacing, project_number_spacing, lab_reporting_batch_spacing]
 
 
-        return last_cell
+        return last_cell, spacing_data
 
     except Exception as e:
 

@@ -37,9 +37,9 @@ def prepare_format():
         print(f"Preparing report format...")
 
         # Header section
-        next_row = header_space(WB, WSD, 1)
+        next_row, cell_mapping = header_space(WB, WSD, 1)
         header_data = get_header_data(WB, CC)
-        #print_header_data(WB, WSD, header_data, cell_mapping)
+        print_header_data(WB, WSD, header_data, cell_mapping)
 
         # Lab section
         lab_space(WB, WSD, next_row)

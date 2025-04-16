@@ -58,7 +58,7 @@ def write_cell(ws, celda_coord, valor):
         return False
 
 
-def print_header_data(wb, ws, header_data, cell_mapping):
+def print_header_data(wb, ws, header_data, spacing_data: list):
     """Versión mejorada con manejo robusto de archivos"""
     try:
 
@@ -77,8 +77,40 @@ def print_header_data(wb, ws, header_data, cell_mapping):
             "client_phone": str(header_data[9] if header_data[9] else na_value),
             "project_number": str(header_data[10] if header_data[10] else na_value),
             "lab_reporting_batch_id": str(header_data[11] if header_data[11] else na_value)
+
         }
 
+        cell_mapping = {
+
+            "company_name": [f"G{spacing_data[0]}", f"G{spacing_data[0]}", f"G{spacing_data[0]}",
+                             f"G{spacing_data[0]}"],
+            "client_name": [f"G{spacing_data[1]}", f"G{spacing_data[1]}", f"G{spacing_data[1]}", f"G{spacing_data[1]}",
+                            f"G{spacing_data[1]}"],
+            "client_address": [f"G{spacing_data[2]}", f"G{spacing_data[2]}", f"G{spacing_data[2]}", f"G{spacing_data[2]}",
+                               f"G{spacing_data[2]}"],
+            "city": [f"G{spacing_data[3]}", f"G{spacing_data[3]}", f"G{spacing_data[3]}", f"G{spacing_data[3]}",
+                     f"G{spacing_data[3]}"],
+            "state": [f"G{spacing_data[4]}", f"G{spacing_data[4]}", f"G{spacing_data[4]}", f"G{spacing_data[4]}",
+                      f"G{spacing_data[4]}"],
+            "zip_code": [f"L{spacing_data[5]}", f"L{spacing_data[5]}", f"L{spacing_data[5]}", f"L{spacing_data[5]}", f"L{spacing_data[5]}"],
+            "requested_data": [f"AF{spacing_data[6]}", f"AF{spacing_data[6]}",
+                               f"AF{spacing_data[6]}", f"AF{spacing_data[6]}",
+                               f"AF{spacing_data[6]}"],
+            "facility_id": [f"AF{spacing_data[7]}", f"AF{spacing_data[7]}", f"AF{spacing_data[7]}",
+                            f"AF{spacing_data[7]}", f"AF{spacing_data[7]}"],
+            "project_location": [f"AF{spacing_data[8]}", f"AF{spacing_data[8]}",
+                                 f"AF{spacing_data[8]}", f"AF{spacing_data[8]}",
+                                 f"AF{spacing_data[8]}"],
+            "client_phone": [f"AF{spacing_data[9]}", f"AF{spacing_data[9]}", f"AF{spacing_data[9]}",
+                             f"AF{spacing_data[9]}", f"AF{spacing_data[9]}"],
+            "project_number": [f"AF{spacing_data[10]}", f"AF{spacing_data[10]}",
+                               f"AF{spacing_data[10]}", f"AF{spacing_data[10]}",
+                               f"AF{spacing_data[10]}"],
+            "lab_reporting_batch_id": [f"AF{spacing_data[11]}", f"AF{spacing_data[11]}",
+                                       f"AF{spacing_data[11]}", f"AF{spacing_data[11]}",
+                                       f"AF{spacing_data[11]}"]
+
+        }
 
 
         for field, cells in cell_mapping.items():
