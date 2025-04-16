@@ -3,7 +3,7 @@ from scripts.excel.connect_excel import get_excel
 from scripts.utils.safe_save import safe_save_workbook
 
 
-def print_footer(wb, wsd, route_excel: str, init_row: int):
+def print_footer(wb, wsd,init_row: int):
 
     try:
 
@@ -12,16 +12,14 @@ def print_footer(wb, wsd, route_excel: str, init_row: int):
         header_lab_destination = wsd
 
 
-        src_range = "A1:AP1"
+        src_range = "A1:AP2"
         destination_range = f"A{init_row}"
-
-
 
         copy_range_with_styles(header_lab_source, header_lab_destination, src_range, destination_range)
 
         last_cell = init_row + 2
 
-        safe_save_workbook(wb, route_excel, 3)
+        #safe_save_workbook(wb, route_excel, 3)
 
         return last_cell
 

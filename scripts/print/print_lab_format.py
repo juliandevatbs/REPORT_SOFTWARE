@@ -3,7 +3,7 @@ from scripts.excel.connect_excel import get_excel
 from scripts.utils.safe_save import safe_save_workbook
 
 
-def print_lab_format_row(wb, wsd, rows_l: int, route_excel: str, last_cell: int):
+def print_lab_format_row(wb, wsd, rows_l: int,last_cell: int):
 
     try:
 
@@ -21,18 +21,14 @@ def print_lab_format_row(wb, wsd, rows_l: int, route_excel: str, last_cell: int)
 
             to_print_row = i + last_cell
 
-            print(to_print_row)
-
             destination_range = f"A{to_print_row}"
 
             copy_range_with_styles(header_lab_source, header_lab_destination, src_range, destination_range)
 
 
-        last_cell = 14
+        return last_cell + rows_l
 
-        safe_save_workbook(wb, route_excel, 3)
-
-        return last_cell
+        #safe_save_workbook(wb, route_excel, 3)
 
     except Exception as e:
 

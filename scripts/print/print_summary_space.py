@@ -3,7 +3,7 @@ from scripts.excel.connect_excel import get_excel
 from scripts.utils.safe_save import safe_save_workbook
 
 
-def print_summary_space(wb, wsd, init_row: int, route_excel:str):
+def print_summary_space(wb, wsd, init_row: int):
     try:
 
 
@@ -15,9 +15,9 @@ def print_summary_space(wb, wsd, init_row: int, route_excel:str):
 
         copy_range_with_styles(header_lab_source, header_lab_destination, src_range, destination_range)
 
-        last_cell = 14
+        last_cell = init_row + 2
 
-        safe_save_workbook(wb, route_excel, 3)
+        #safe_save_workbook(wb, route_excel, 3)
 
         return last_cell
 
@@ -25,7 +25,4 @@ def print_summary_space(wb, wsd, init_row: int, route_excel:str):
 
         print(f"ERROR: {e}")
 
-
-
-    return True
 

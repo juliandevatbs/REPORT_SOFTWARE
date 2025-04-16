@@ -3,7 +3,7 @@ from scripts.excel.connect_excel import get_excel
 from scripts.utils.safe_save import safe_save_workbook
 
 
-def print_quality_space(wb, wsd, start_row: int, route_excel: str):
+def print_quality_space(wb, wsd, start_row: int):
 
     try:
 
@@ -20,7 +20,7 @@ def print_quality_space(wb, wsd, start_row: int, route_excel: str):
 
         last_cell = f"A{start_row + 2}"
 
-        safe_save_workbook(wb, route_excel, 3)
+        #safe_save_workbook(wb, route_excel, 3)
 
         return last_cell
 

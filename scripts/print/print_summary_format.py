@@ -3,7 +3,7 @@ from scripts.excel.connect_excel import get_excel
 from scripts.utils.safe_save import safe_save_workbook
 
 
-def print_summary_format(wb, wsd, start_row:int, route_excel: str, q_rows:int):
+def print_summary_format(wb, wsd, start_row:int, q_rows:int):
     try:
 
 
@@ -21,8 +21,11 @@ def print_summary_format(wb, wsd, start_row:int, route_excel: str, q_rows:int):
 
             copy_range_with_styles(header_lab_source, header_lab_destination, src_range, destination_range)
 
+        last_cell = start_row + (4*q_rows)
 
-        safe_save_workbook(wb, route_excel, 3)
+        return last_cell
+
+        #safe_save_workbook(wb, route_excel, 3)
 
 
 

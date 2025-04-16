@@ -58,7 +58,7 @@ def write_cell(ws, celda_coord, valor):
         return False
 
 
-def print_header_data(wb, ws, header_data):
+def print_header_data(wb, ws, header_data, cell_mapping):
     """Versión mejorada con manejo robusto de archivos"""
     try:
 
@@ -79,20 +79,7 @@ def print_header_data(wb, ws, header_data):
             "lab_reporting_batch_id": str(header_data[11] if header_data[11] else na_value)
         }
 
-        cell_mapping = {
-            "company_name": ["H7", "H42", "H120", "H200"],
-            "client_name": ["H8", "H43", "H121", "H201", "H251"],
-            "client_address": ["H9", "H44", "H122", "H202", "H252"],
-            "city": ["H10", "H45", "H123", "H203", "H253"],
-            "state": ["H11", "H46", "H124", "H204", "H254"],
-            "zip_code": ["M11", "M46", "M124", "M204", "M254"],
-            "requested_data": ["AG6", "AG41", "AG119", "AG199", "AG249"],
-            "facility_id": ["AG7", "AG42", "AG120", "AG200", "AG250"],
-            "project_location": ["AG8", "AG43", "AG121", "AG201", "AG251"],
-            "client_phone": ["AG9", "AG44", "AG122", "AG202", "AG252"],
-            "project_number": ["AG10", "AG45", "AG123", "AG203", "AG253"],
-            "lab_reporting_batch_id": ["AG11", "AG46", "AG124", "AG204", "AG254"]
-        }
+
 
         for field, cells in cell_mapping.items():
             for cell in cells:

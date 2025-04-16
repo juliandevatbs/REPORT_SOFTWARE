@@ -144,7 +144,7 @@ def print_quality_data(route: str, last_lab_sample_id):
 
         # Guardar los cambios
         try:
-            wb.save(route)
+            #wb.save(route)
             print("Datos escritos exitosamente")
             return True
         except Exception as e:
@@ -156,7 +156,3 @@ def print_quality_data(route: str, last_lab_sample_id):
         traceback.print_exc()
         return False
 
-
-if __name__ == "__main__":
-    print_quality_data(r"C:\Users\Duban Serrano\Desktop\REPORTES PYTHON\excel\Reporte 2025-03-12 (4).xlsx",
-                       "2503041-020")

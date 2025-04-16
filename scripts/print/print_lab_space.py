@@ -3,7 +3,7 @@ from scripts.copy_blocks.copy_block import copy_range_with_styles
 from scripts.excel.connect_excel import get_excel
 
 
-def lab_space(wb, wsd, route_excel: str, last_cell: int):
+def lab_space(wb, wsd,last_cell: int):
 
 
     try:
@@ -20,7 +20,7 @@ def lab_space(wb, wsd, route_excel: str, last_cell: int):
 
         last_cell = 14
 
-        safe_save_workbook(wb, route_excel, 3)
+        #safe_save_workbook(wb, route_excel, 3)
 
         return last_cell
 

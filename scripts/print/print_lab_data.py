@@ -96,12 +96,12 @@ def print_lab_data(wb, ws, chain_data):
             write_cell(ws, f"B{start_row}", row_data[0])
             write_cell(ws, f"H{start_row}", row_data[7])
             write_cell(ws, f"K{start_row}", row_data[1])
-            write_cell(ws, f"U{start_row}", row_data[2])
-            write_cell(ws, f"W{start_row}", row_data[3])
+            write_cell(ws, f"T{start_row}", row_data[2])
+            write_cell(ws, f"X{start_row}", row_data[3])
             write_cell(ws, f"AC{start_row}", row_data[5])
             write_cell(ws, f"AF{start_row}", row_data[9])
             start_row += 1
-        wb.save(r"C:\Users\Duban Serrano\Desktop\REPORTES PYTHON\excel\Reporte 2025-03-12 (4).xlsx")
+        #wb.save(r"C:\Users\Duban Serrano\Desktop\REPORTES PYTHON\excel\Reporte 2025-03-12 (4).xlsx")
         print("¡Datos escritos exitosamente!")
         return True
 
