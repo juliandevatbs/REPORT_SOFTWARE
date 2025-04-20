@@ -40,7 +40,10 @@ def header_space(wb, wsd, init_row: int):
 
     except Exception as e:
 
+
         print(f"ERROR: {e}")
+        
+        return init_row, []
 
 
 

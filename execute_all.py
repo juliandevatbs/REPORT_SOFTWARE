@@ -24,7 +24,7 @@ from scripts.print.print_analytic_space import print_analyitic_space
 from scripts.print.print_header_data import print_header_data
 
 # Definir constantes para evitar repetición
-EXCEL_PATH = r"C:\Users\Duban Serrano\Desktop\REPORTES PYTHON\excel\Reporte 2025-03-12 (4).xlsx"
+EXCEL_PATH = "./excel/Reporte 2025-03-12 (4) 1.xlsx"
 SAVE_RETRIES = 3
 WB = get_excel(EXCEL_PATH)
 WSD = WB["Final"]
@@ -39,26 +39,33 @@ def prepare_format():
         # Header section
         next_row, cell_mapping = header_space(WB, WSD, 1)
         header_data = get_header_data(WB, CC)
-        print_header_data(WB, WSD, header_data, cell_mapping)
+        
+        print()
+        
 
         # Lab section
         lab_space(WB, WSD, next_row)
         next_row = print_lab_format_row(WB, WSD, 20, next_row +1)
 
-
+        
         # Footer after lab
         footer_row = print_footer(WB, WSD, next_row + 2)
 
+        
+        
         # Analytic section
-        next_row = header_space(WB, WSD, footer_row)
+        next_row, spacing_data = header_space(WB, WSD, footer_row)
+        
         next_row = print_analyitic_space(WB, WSD, next_row)
+        print(f"DEBUG: next_row antes de print_analytic_format = {next_row}")
         next_row = print_analytic_format(WB, WSD, next_row, EXCEL_PATH, 23)
-
+        print(f"DEBUG: next_row después de print_analytic_format = {next_row}")
+        
         # Footer after analytic
         footer_row = print_footer(WB, WSD, next_row)
 
         # Summary section
-        next_row = header_space(WB, WSD, footer_row)
+        next_row, spacing_data = header_space(WB, WSD, footer_row)
         next_row = print_summary_space(WB, WSD, next_row)
         next_row = print_summary_format(WB, WSD, next_row, 23)
 
@@ -66,7 +73,8 @@ def prepare_format():
         footer_row = print_footer(WB, WSD, next_row)
 
         # Quality section
-        next_row = header_space(WB, WSD, footer_row)
+        next_row, spacing_data = header_space(WB, WSD, footer_row)
+        print_header_data(WB, WSD, header_data, cell_mapping)
         print_quality_space(WB, WSD, next_row)
 
         safe_save_workbook(WB, EXCEL_PATH, SAVE_RETRIES)
