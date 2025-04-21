@@ -58,7 +58,7 @@ def write_cell(ws, celda_coord, valor):
         return False
 
 
-def print_header_data(wb, ws, header_data, spacing_data: list):
+def print_header_data(ws, header_data, spacing_data: list):
     """Versión mejorada con manejo robusto de archivos"""
     try:
 

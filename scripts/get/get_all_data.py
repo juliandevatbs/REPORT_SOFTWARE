@@ -26,7 +26,7 @@ def get_sheet_names(file_path):
         return []
 
 
-def get_chain_data():
+def get_chain_data(ws):
     """
     Extract chain of custody data from the Excel file.
 
@@ -34,25 +34,15 @@ def get_chain_data():
         list: List of chain data entries
     """
     all_data = []
-    route = r"C:/Users/Duban Serrano/Desktop/REPORTES PYTHON/excel/Reporte 2025-03-12 (4).xlsx"
-    sheetname = 'Chain of Custody 1'
+   
 
-    # Verify file exists
-    if not os.path.exists(route):
-        print("Error: File not found")
-        return None
+    
 
     try:
-        # Open workbook in read-only mode with data only (no formulas)
-        wb = load_workbook(filename=route, read_only=True, data_only=True, keep_vba=False)
+        
 
         # Verify sheet exists
-        if sheetname not in wb.sheetnames:
-            print(f"Error: Worksheet '{sheetname}' not found")
-            wb.close()
-            return None
-
-        ws = wb[sheetname]
+     
 
         # Pre-load the constant values
         analysis_requested = ws['AI5'].value
@@ -114,6 +104,7 @@ def get_chain_data():
                     row.append(cell_value)
 
             row.append(sampled_by)
+            print(f"ANALISISSSSSSSSSSSSSSSSSSSS{analysis_requested}")
             row.append(analysis_requested)
 
             # Process specific sheets
@@ -129,7 +120,7 @@ def get_chain_data():
 
             all_data.append(row)
 
-        wb.close()
+        
         gc.collect()  # Force garbage collection
 
     except Exception as e:
@@ -139,13 +130,13 @@ def get_chain_data():
     return all_data
 
 
-def get_matrix_data_flattened(route: str):
+def get_matrix_data_flattened(wb, WSC,  route: str):
     """
     Process matrix data from Excel sheets and create flattened data structure.
     Each analysis gets its own complete row with sample identification data.
     """
 
-    chain_data = get_chain_data()
+    chain_data = get_chain_data(WSC)
     if chain_data is None or len(chain_data) == 0:
         return None
 
@@ -158,9 +149,7 @@ def get_matrix_data_flattened(route: str):
         "Total Suspended Solids", "Turbidity"
     ]
 
-    if not os.path.exists(route):
-        print("Error: File not found")
-        return None
+    
 
     # Get all sheet names once
     sheets_in_excel = get_sheet_names(route)
@@ -216,7 +205,6 @@ def get_matrix_data_flattened(route: str):
                 else:
                     print(f"    Abriendo hoja {sheet_name}")
                     # Open the workbook with just the needed sheet
-                    wb = load_workbook(filename=route, read_only=True, data_only=True, keep_vba=False)
 
                     try:
                         ws = wb[sheet_name]
@@ -263,7 +251,6 @@ def get_matrix_data_flattened(route: str):
                         print(f"    Error procesando hoja {sheet_name}: {e}")
                         sheet_data = None
 
-                    wb.close()
                     gc.collect()
 
                 # Use the sheet data if available
@@ -285,12 +272,12 @@ def get_matrix_data_flattened(route: str):
                     print(f"    Agregada fila aplanada con {len(flattened_row)} elementos para {sheet_name}")
                 else:
                     print(f"    No se encontraron datos para la muestra {sample_id} en la hoja {sheet_name}")
-
+        
     except Exception as e:
         print(f"Error general in get_matrix_data_flattened: {e}")
         return None
 
-    return flattened_results
+    return chain_data, flattened_results
 
 
 

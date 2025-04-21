@@ -1,5 +1,7 @@
 import traceback
-import subprocess
+import re
+from openpyxl.utils import column_index_from_string
+from openpyxl.cell.cell import MergedCell
 from openpyxl import load_workbook
 from datetime import datetime
 import sys
@@ -23,6 +25,47 @@ def format_date(value):
         return value.strftime('%Y-%m-%d')
     return str(value) if value is not None else ""
 
+def write_cell(ws, celda_coord, valor):
+    """
+    Escribe un valor en una celda, incluso si es parte de un rango combinado.
+    
+    Args:
+        ws: Hoja de trabajo
+        celda_coord: Coordenada de la celda (ej: 'B13')
+        valor: Valor a escribir
+    
+    Returns:
+        bool: True si se pudo escribir, False en caso contrario
+    """
+    try:
+        match = re.match(r'([A-Za-z]+)(\d+)', celda_coord)
+        if not match:
+            return False
+            
+        col_str, row_str = match.groups()
+        row = int(row_str)
+        col = column_index_from_string(col_str)
+        
+        # Intentar obtener la celda directamente
+        celda = ws.cell(row=row, column=col)
+        
+        # Si no es una celda combinada, escribir directamente
+        if not isinstance(celda, MergedCell):
+            celda.value = valor
+            return True
+        
+        for rango in ws.merged_cells.ranges:
+            min_row, min_col, max_row, max_col = rango.min_row, rango.min_col, rango.max_row, rango.max_col
+            
+            if min_row <= row <= max_row and min_col <= col <= max_col:
+                celda_principal = ws.cell(row=min_row, column=min_col)
+                celda_principal.value = valor
+                return True
+        
+        return False
+    
+    except Exception as e:
+        return False
 
 def write_data_block(ws, data_block, first_line_row):
     try:
@@ -52,20 +95,20 @@ def write_data_block(ws, data_block, first_line_row):
             f"Z{first_line_row}": by_value,
             f"AJ{first_line_row}": matrix_id_value,
             f"B{second_line_row}": analyte_name,
-            f"J{second_line_row}": result_value,
+            f"J{second_line_row}": round(result_value),
             f"AD{second_line_row}": date_value,
             f"AF{second_line_row}": by_value,
             f"AH{second_line_row}": batch_id_value,
             f"R{second_line_row}": units_value,
-            f"U{second_line_row}": df_value,
-            f"V{second_line_row}": mdl_value,
-            f"W{second_line_row}": pql_value,
+            f"T{second_line_row}": df_value,
+            f"U{second_line_row}": mdl_value,
+            f"V{second_line_row}": pql_value,
             f"Z{second_line_row}": analyzed_method,
             f"AJ{second_line_row}": ''
         }
 
         for cell, value in cell_mapping.items():
-            ws[cell] = value
+            write_cell(ws, cell, value)  # Use the new write_cell function instead of direct assignment
 
         return True
 
@@ -74,28 +117,21 @@ def write_data_block(ws, data_block, first_line_row):
         traceback.print_exc()
         return False
 
-
-def print_analytical_data(wb, ws, row_data):
+def print_analytical_data(ws, row_data, current_row: int):
     try:
-        # Configuración
-        config = {
-            "sheetname": "Reporte",
-            "start_row": 51,
-            "row_spacing": 5
-        }
-
-
-
+        
+        print(f"CANTIDAD DE REGISTROS PARA ESCRIBIIIIIIR {len(row_data)}")
         if not row_data:
             print("No hay datos para escribir")
             return False
 
+        print(f"ROW DATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA{row_data}")
 
         grouped_data = {}
         ordered_analytes = []
 
         for data_block in row_data:
-            if validate_data_block(data_block) :
+            if validate_data_block(data_block):
                 analyte_name = data_block[9] or "Sin Nombre"
                 if analyte_name not in grouped_data:
                     grouped_data[analyte_name] = []
@@ -104,16 +140,14 @@ def print_analytical_data(wb, ws, row_data):
 
         # Escribir datos agrupados
         success_count = 0
-        current_row = config["start_row"]
+        
+        row_spacing = 4
 
         for analyte in ordered_analytes:
             for data_block in grouped_data[analyte]:
-                print(len(data_block))
-                print(data_block[9])
-                print(data_block[18])
                 if write_data_block(ws, data_block, current_row):
                     success_count += 1
-                    current_row += config["row_spacing"]
+                    current_row += row_spacing
                     print(f"Escrito bloque para analito: {analyte} en fila {current_row}")
                 else:
                     print(f"Error escribiendo bloque para analito: {analyte}")
@@ -125,5 +159,3 @@ def print_analytical_data(wb, ws, row_data):
         print(f"Error crítico: {str(e)}")
         traceback.print_exc()
         return False
-
-

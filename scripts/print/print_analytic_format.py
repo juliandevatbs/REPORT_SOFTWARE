@@ -10,6 +10,10 @@ def print_analytic_format(wb, wsd,  start_row:int, route_excel: str, q_rows:int)
 
         src_range = "A1:AP4"
 
+        print(f"CANTIDAD DE REGISTROS PARA FORMATEAAAR {q_rows}")
+
+
+
         for i in range(q_rows):
 
             to_print_row = (i*4) + start_row
@@ -19,7 +23,7 @@ def print_analytic_format(wb, wsd,  start_row:int, route_excel: str, q_rows:int)
 
             copy_range_with_styles(header_lab_source, header_lab_destination, src_range, destination_range)
 
-        last_cell = start_row + (4*23)
+        last_cell = start_row + (4*q_rows)
 
         return last_cell + 10
 

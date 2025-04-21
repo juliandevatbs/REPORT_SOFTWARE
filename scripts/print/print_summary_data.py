@@ -77,12 +77,13 @@ def should_write_block(data_block):
     try:
 
         value_result = float(data_block[18]) if data_block[18] is not None else None
-        value_df = float(data_block[13]) if data_block[13] is not None else None
-
-        if value_result is None or value_df is None:
+        value_pql = float(data_block[14]) if data_block[14] is not None else None
+        
+        print(f"RESULT{value_result}-----------PQLLLL{value_pql}")
+        if value_result is None or value_pql is None:
             return False
 
-        return value_result > value_df
+        return value_result > value_pql
     except (ValueError, TypeError):
         return False
 
@@ -138,7 +139,7 @@ def write_data_block(ws, data_block, first_line_row):
         }
 
         for cell, value in cell_mapping.items():
-            ws[cell] = value
+            write_cell(ws, cell, value)
 
         return True
 
@@ -148,29 +149,20 @@ def write_data_block(ws, data_block, first_line_row):
         return False
 
 
-def print_summary_data(wb, ws, row_data):
+def print_summary_data(ws, row_data, current_row: int):
     try:
-        # Configuración (igual que la original)
-        config = {
-            "sheetname": "Reporte",
-            "start_row": 140,
-            "row_spacing": 5
-        }
 
         if not row_data:
             print("No hay datos para escribir")
             return False
 
-
-
         grouped_data = {}
         ordered_analytes = []
 
-        # Filtro modificado: solo datos donde posición 19 > posición 13
         for data_block in row_data:
-            print(data_block[19])
-            print(data_block[13])
-            if validate_data_block(data_block) and data_block[19] > data_block[13]:
+            print(" DATAAAAAAA BLOCKSSSS")
+            print(data_block)
+            if validate_data_block(data_block) and should_write_block(data_block):
                 analyte_name = data_block[9] or "Sin Nombre"
                 if analyte_name not in grouped_data:
                     grouped_data[analyte_name] = []
@@ -179,7 +171,7 @@ def print_summary_data(wb, ws, row_data):
 
         # El resto del código es igual que la función original
         success_count = 0
-        current_row = config["start_row"]
+        row_spacing = 4
 
         for analyte in ordered_analytes:
             for data_block in grouped_data[analyte]:
@@ -188,7 +180,7 @@ def print_summary_data(wb, ws, row_data):
                 print(data_block[18])
                 if write_data_block(ws, data_block, current_row):
                     success_count += 1
-                    current_row += config["row_spacing"]
+                    current_row += row_spacing
                     print(f"Escrito bloque para analito: {analyte} en fila {current_row}")
                 else:
                     print(f"Error escribiendo bloque para analito: {analyte}")

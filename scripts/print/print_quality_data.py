@@ -47,58 +47,36 @@ def write_cell(ws, celda_coord, valor):
         return False
 
 
-def print_quality_data(route: str, last_lab_sample_id):
+def print_quality_data(ws, init_row: int, quality_data: list):
     try:
-        sheetname = "Reporte"
-        start_row = 231
+        
         row_spacing = 7
 
-        # Obtener datos con ID secuencial
-        row_data = get_q_data(base_sample_id=last_lab_sample_id)
 
-        if not row_data:
-            print("Error: There is no data to write")
-            return False
-
-        if not os.path.exists(route):
-            print(f"File not found: {route}")
-            return False
-
-        print("Open WorkBook...")
-        try:
-            wb = load_workbook(filename=route)
-            ws = wb[sheetname]
-        except Exception as e:
-            print(f"Error opening file: {str(e)}")
-            return False
-
-        for block_num, data_block in enumerate(row_data):
+        for block_num, data_block in enumerate(quality_data):
             print(f"Processing block {block_num}: {data_block}")
             if not isinstance(data_block, list) or len(data_block) < 16:
                 print(f"Invalid data block: {data_block}")
                 continue
 
             try:
-                # Estructura actual de data_block:
-                # [sample_id, sheet_name, B, C, D, E, F, G, H, I, J, K, N19, N20, N21, N22, N23, N24]
+                
 
-                first_line_row = start_row + (block_num * row_spacing)
+                first_line_row = init_row + (block_num * row_spacing)
                 second_line_row = first_line_row + 1
                 third_line_row = first_line_row + 2
                 fourth_line_row = first_line_row + 3
                 fifth_line_row = first_line_row +5
 
 
-                print(first_line_row, second_line_row, third_line_row, fourth_line_row, fifth_line_row)
-
                 # Asignación corregida según nueva estructura
-                client_sample_id = data_block[0]  # sample_id generado
-                sheet_name = data_block[1]  # nombre de hoja
-                sampled = data_block[3]  # valor columna B (fecha)
-                lab_sample = data_block[3]  # valor columna C (tipo de muestra)
-                analyte_name = sheet_name.split('(')[0].strip()  # extraer nombre de analito
-                results = data_block[8]  # valor columna I
-                units = data_block[17]  # último valor constante (N24)
+                client_sample_id = ''  # sample_id generado
+                sheet_name = data_block[2]  # nombre de hoja
+                sampled = data_block[1]  # valor columna B (fecha)
+                lab_sample = ''  # valor columna C (tipo de muestra)
+                analyte_name = data_block[0] # extraer nombre de analito
+                results = data_block[3]  # valor columna I
+                units = data_block[-1]  # último valor constante (N24)
                 df = data_block[13]  # N20
                 mdl = data_block[14]  # N21
                 pql = data_block[15]  # N22
@@ -107,7 +85,7 @@ def print_quality_data(route: str, last_lab_sample_id):
                 matrix_id = "GroundWater"
                 by = ""
                 batch_id = f"{client_sample_id}{lab_sample}"
-                date =data_block[2]
+                date =data_block[1]
 
                 # Primera línea
                 write_cell(ws, f"B{first_line_row}", sampled)

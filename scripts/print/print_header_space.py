@@ -20,13 +20,13 @@ def header_space(wb, wsd, init_row: int):
         copy_range_with_styles(header_source, header_destination, src_range, destination_range)
 
         #safe_save_workbook(wb, route_excel, 3)
-        company_spacing = init_row + 4 + 1
+        company_spacing = init_row + 6
         clients_spacing  = company_spacing + 1
         adress_spacing = clients_spacing + 1
         city_spacing  = adress_spacing + 1
         state_spacing = city_spacing +1
         zip_spacing = state_spacing
-        requested_data_spacing = init_row + 4
+        requested_data_spacing = init_row + 5
         facility_id_spacing = requested_data_spacing +1
         project_location_spacing = facility_id_spacing + 1
         client_phone_spacing = project_location_spacing + 1

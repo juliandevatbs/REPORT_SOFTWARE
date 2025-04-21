@@ -33,6 +33,7 @@ def write_cell(ws, celda_coord, valor):
     try:
 
         match = re.match(r'([A-Za-z]+)(\d+)', celda_coord)
+        
         if not match:
             return False
 
@@ -83,16 +84,16 @@ def write_cell(ws, celda_coord, valor):
         return False
 
 
-def print_lab_data(wb, ws, chain_data):
+def print_lab_data(ws, chain_data, start_row: int):
     try:
         print(f"Datos recibidos: {len(chain_data)} filas")
         if not isinstance(chain_data, list) or not all(isinstance(row, list) for row in chain_data):
             print("Error: Datos en formato incorrecto.")
             return False
 
-        start_row = 15
+        
         for row_data in chain_data:
-
+            print(row_data)
             write_cell(ws, f"B{start_row}", row_data[0])
             write_cell(ws, f"H{start_row}", row_data[7])
             write_cell(ws, f"K{start_row}", row_data[1])
@@ -100,6 +101,7 @@ def print_lab_data(wb, ws, chain_data):
             write_cell(ws, f"X{start_row}", row_data[3])
             write_cell(ws, f"AC{start_row}", row_data[5])
             write_cell(ws, f"AF{start_row}", row_data[9])
+            write_cell(ws, f"AE{start_row}", row_data[9])
             start_row += 1
         #wb.save(r"C:\Users\Duban Serrano\Desktop\REPORTES PYTHON\excel\Reporte 2025-03-12 (4).xlsx")
         print("¡Datos escritos exitosamente!")
